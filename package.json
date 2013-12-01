@@ -1,0 +1,23 @@
+{
+  "author": "Dan Tillberg <dan@tillberg.us>",
+  "name": "timeline",
+  "description": "",
+  "version": "",
+  "keywords": [],
+  "main": "lib/serve.js",
+  "engines": {
+    "node": ">=0.10.9"
+  },
+  "dependencies": {
+    "socket.io": "0.9.14",
+    "socket.io-client": "0.9.16",
+    "express": "3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tillberg/timeline.git"
+  },
+  "devDependencies": {
+    "node-watch": "0.3.4"
+  }
+}
