@@ -30,6 +30,7 @@ socket.once('data', function (data) {
             }
         });
     });
+    // events.sort(function () { return Math.random() > 0.5; })
     T('events', events);
 });
 
@@ -48,13 +49,33 @@ socket.once('data', function (data) {
     timer();
 }());
 
-tbone.createView('timeline', function () {
+T('minDate', date('1999'));
+T('maxDate', date('2014'));
+
+function getScale (view) {
     T('screen.width');
-    var self = this;
-    var width = self.$el.width();
-    var x = d3.time.scale()
-        .domain([date('1982'), date('2014')])
+    var width = view.$el.width();
+    return d3.time.scale()
+        .domain([T('minDate'), T('maxDate')])
         .range([0, width]);
+}
+
+tbone.createView('axis', function () {
+    var self = this;
+    var x = getScale(this);
+    var ticks = d3.select(this.el).selectAll('tick').data(x.ticks());
+    var newTicks = ticks.enter().append('tick');
+    var formatFn = x.tickFormat();
+    newTicks
+        .text(function (d) { return formatFn(d); })
+        .style('left', function (d) { return x(d) + 'px'; });
+
+});
+
+var VERT_PADDING = 2;
+tbone.createView('timeline', function () {
+    var self = this;
+    var x = getScale(self);
     var events = _.map(T('events') || [], function (o) { return _.clone(o); });
     var allEvents = d3.select(this.el)
         .selectAll('event')
@@ -81,11 +102,11 @@ tbone.createView('timeline', function () {
                     (block.right <= right && block.right >= left) ||
                     (block.left <= left && block.right >= right)) {
                     memo.push(block);
-                    attemptTops.push(block.bottom + 1);
+                    attemptTops.push(block.bottom + VERT_PADDING);
                 }
                 return memo;
             }, []);
-            attemptTops.sort();
+            attemptTops = _.sortBy(attemptTops, function (a) { return a; })
             var top = d.top = _.find(attemptTops, function (topTry) {
                 var bottomTry = topTry + height;
                 return _.all(occupiedRanges, function (block) {

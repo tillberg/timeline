@@ -4,11 +4,25 @@
     box-sizing: border-box;
 }
 
+.timeline {
+    position: relative;
+    top: 24px;
+}
+
+tick,
 event {
     position: absolute;
     display: inline-block;
-    max-width: 160px;
     text-align: center;
+}
+
+tick {
+    width: 100px;
+    margin-left: -50px;
+}
+
+event {
+    max-width: 160px;
     background: rgba(186, 218, 85, 0.8);
     border-radius: 4px;
     padding: 0.2em;
