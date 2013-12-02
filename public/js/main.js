@@ -16,7 +16,8 @@ function date (d) {
     }
 }
 
-socket.once('data', function (data) {
+var nextId = 1;
+socket.on('data', function (data) {
     // console.log(data);
     var events = [];
     _.each(data, function (text, name) {
@@ -32,7 +33,7 @@ socket.once('data', function (data) {
                 currEndDate = date(line.split('-')[1]);
             } else {
                 events.push(_.extend({
-                    id: events.length,
+                    id: nextId,
                     desc: line
                 }, currEndDate ? {
                     startDate: currDate,
@@ -40,6 +41,7 @@ socket.once('data', function (data) {
                 } : {
                     date: currDate
                 }));
+                nextId++;
             }
         });
     });
@@ -116,18 +118,21 @@ tbone.createView('timeline', function () {
         .append('div')
         .append('span')
         .text(function (d) { return d.desc; });
+    allEvents.exit().remove();
     var blocks = [];
     allEvents
         .style('top', function (d) {
             var left, right, height;
             if (d.date) {
-                left = d.left - 6;
-                right = d.right + 6;
-                height = 150;
+                left = d.left - 4;
+                right = d.right + 4;
+                height = 200;
             } else {
                 left = d.left;
                 right = d.right = d.left + d.width;
                 height = d.height = $(this).outerHeight();
+                d.left += 2;
+                d.right -= 2;
             }
             var attemptTops = [0];
             var occupiedRanges = _.reduce(blocks, function (memo, block) {
