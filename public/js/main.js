@@ -7,7 +7,13 @@ socket.once('reload', function () {
 });
 
 function date (d) {
-    return d && d.getFullYear ? d : d && new Date(d);
+    if (d && d.getFullYear) {
+        return d;
+    } else if (d && d.match(/^\s*now/)) {
+        return new Date();
+    } else {
+        return d && new Date(d);
+    }
 }
 
 socket.once('data', function (data) {
@@ -15,20 +21,30 @@ socket.once('data', function (data) {
     var events = [];
     _.each(data, function (text, name) {
         var currDate;
+        var currEndDate;
         _.each(text.split('\n'), function (line) {
             line = line.replace(/^\s+|\s+$/g, '');
             if (!line) {
                 currDate = null;
+                currEndDate = null;
             } else if (!currDate) {
-                currDate = date(line);
+                currDate = date(line.split('-')[0]);
+                currEndDate = date(line.split('-')[1]);
             } else {
-                events.push({
+                events.push(_.extend({
                     id: events.length,
-                    date: currDate,
                     desc: line
-                });
+                }, currEndDate ? {
+                    startDate: currDate,
+                    endDate: currEndDate
+                } : {
+                    date: currDate
+                }));
             }
         });
+    });
+    events = _.sortBy(events, function (event) {
+        return event.date ? '2' : '1';
     });
     // events.sort(function () { return Math.random() > 0.5; })
     T('events', events);
@@ -49,8 +65,8 @@ socket.once('data', function (data) {
     timer();
 }());
 
-T('minDate', date('1999'));
-T('maxDate', date('2014'));
+T('minDate', date('2000'));
+T('maxDate', date('now'));
 
 function getScale (view) {
     T('screen.width');
@@ -84,18 +100,35 @@ tbone.createView('timeline', function () {
         });
     var newEvents = allEvents.enter().append('event');
     newEvents
-        .text(function (d) { return d.desc; })
+        .classed('moment', function (d) { return !!d.date; })
+        .each(function (d) {
+            d.left = Math.round(x(d.date || d.startDate));
+            d.right = Math.round(x(d.date || d.endDate));
+            d.width = d.right - d.left + 1;
+        })
+        .style('width', function (d) {
+            return d.width + 'px';
+        })
         .style('left', function (d) {
-            d.width = $(this).outerWidth();
-            d.left = Math.round(x(d.date) - 0.5 * d.width);
+            // d.width = $(this).outerWidth();
             return d.left + 'px';
-        });
+        })
+        .append('div')
+        .append('span')
+        .text(function (d) { return d.desc; });
     var blocks = [];
     allEvents
         .style('top', function (d) {
-            var left = d.left;
-            var right = d.right = d.left + d.width;
-            var height = d.height = $(this).outerHeight();
+            var left, right, height;
+            if (d.date) {
+                left = d.left - 6;
+                right = d.right + 6;
+                height = 150;
+            } else {
+                left = d.left;
+                right = d.right = d.left + d.width;
+                height = d.height = $(this).outerHeight();
+            }
             var attemptTops = [0];
             var occupiedRanges = _.reduce(blocks, function (memo, block) {
                 if ((block.left <= right && block.left >= left) ||

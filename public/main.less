@@ -22,8 +22,32 @@ tick {
 }
 
 event {
-    max-width: 160px;
     background: rgba(186, 218, 85, 0.8);
     border-radius: 4px;
     padding: 0.2em;
+
+    div {
+        position: relative;
+        text-align: center;
+    }
+
+    &.moment {
+        background: #000;
+        margin-top: 6px;
+        height: 0px;
+
+        div {
+            -webkit-transform: rotate(-90deg);
+
+            span {
+                font-size: 0.8em;
+                position: absolute;
+                margin-top: -0.75em;
+                margin-left: -307px;
+                width: 300px;
+                white-space: nowrap;
+                text-align: right;
+            }
+        }
+    }
 }
