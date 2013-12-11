@@ -121,12 +121,13 @@ T('zoomDomain', function () {
     timer();
 }());
 
+var PADDING = 10;
 function getScale (view) {
     T('screen.width');
     var width = view.$el.width();
     return d3.time.scale()
         .domain(T('zoomDomain') || [0, 1])
-        .range([0, width]);
+        .range([PADDING, width - PADDING]);
 }
 
 tbone.createView('axis', function () {
@@ -207,17 +208,25 @@ tbone.createView('timeline', function () {
                 });
             });
             d.bottom = d.top + d.height;
-            blocks.push(d);
+            if (!d.date) {
+                blocks.push(d);
+            }
             return top + 'px';
         });
 });
 
 function updateZoom () {
     var x = zoom.x();
-    var min = Math.max(0, x.domain()[0]);
-    var max = Math.min(1, x.domain()[1]);
-    x.domain([min, max]);
-    zoom.x(x);
+    var min = x.domain()[0];
+    var max = x.domain()[1];
+    // I don't get how to do this without messing up panning
+    // if (min < 0 || max > 1) {
+    //     if (min < 0) { min = 0; }
+    //     if (max > 1) { max = 1; }
+    //     x.domain([min, max]);
+    //     zoom.x(x);
+    //     zoom.translate([0, 0]);
+    // }
     T('zoomLeft', min);
     T('zoomRight', max);
 }
