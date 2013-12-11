@@ -6,15 +6,39 @@ socket.once('reload', function () {
     }, 100);
 });
 
-function date (d) {
-    if (d && d.getFullYear) {
-        return d;
-    } else if (d && d.match(/^\s*now/)) {
+window.date = function(v) {
+    if (v && !v.getTime) {
+        var number;
+        if (typeof v === 'string') {
+            // Attempt to parse v as a number
+            number = parseFloat(v);
+            // If we get a number longer than 4 digits, interpret
+            // that as seconds/milliseconds/microseconds
+            if (number && number > 9999) {
+                v = number;
+            } else if (v.match(/\bnow\b/)) {
+                return new Date();
+            }
+        }
+        if (typeof v === 'number') {
+            return new Date(v);
+        } else if (typeof v === 'string') {
+            // Pass non-number strings on to the Date constructor
+            return new Date(v);
+        } else {
+            return null;
+        }
+    } else if (arguments.length === 0) {
         return new Date();
     } else {
-        return d && new Date(d);
+        return v || null;
     }
-}
+};
+
+window.ms = function (d) {
+    var _date = arguments.length ? date(d) : date();
+    return _date ? _date.getTime() : _date;
+};
 
 var nextId = 1;
 socket.on('data', function (data) {
@@ -52,6 +76,36 @@ socket.on('data', function (data) {
     T('events', events);
 });
 
+T('earliestDate', function () {
+    return _.reduce(T('events') || [], function (memo, event) {
+        var start = ms(event.startDate || event.date);
+        return memo ? Math.min(memo, start) : start;
+    }, null);
+});
+
+T('latestDate', function () {
+    return _.reduce(T('events') || [], function (memo, event) {
+        var end = ms(event.endDate || event.date);
+        return memo ? Math.max(memo, end) : end;
+    }, null);
+});
+
+T('zoomDomain', function () {
+    var earliest = ms(T('earliestDate'));
+    var latest = ms(T('latestDate'));
+    var zoomLeft = T('zoomLeft');
+    var zoomRight = T('zoomRight');
+    if (earliest && latest) {
+        var dateWidth = latest - earliest;
+        return [
+            date(earliest + dateWidth * zoomLeft),
+            date(earliest + dateWidth * zoomRight)
+        ];
+    } else {
+        return null;
+    }
+});
+
 (function () {
     function update () {
         T('screen', {
@@ -67,25 +121,24 @@ socket.on('data', function (data) {
     timer();
 }());
 
-T('minDate', date('2000'));
-T('maxDate', date('now'));
-
 function getScale (view) {
     T('screen.width');
     var width = view.$el.width();
     return d3.time.scale()
-        .domain([T('minDate'), T('maxDate')])
+        .domain(T('zoomDomain') || [0, 1])
         .range([0, width]);
 }
 
 tbone.createView('axis', function () {
     var self = this;
     var x = getScale(this);
-    var ticks = d3.select(this.el).selectAll('tick').data(x.ticks());
+    var ticks = d3.select(this.el).selectAll('tick').data(x.ticks(), function (d) { return d; });
     var newTicks = ticks.enter().append('tick');
+    ticks.exit().remove();
     var formatFn = x.tickFormat();
     newTicks
-        .text(function (d) { return formatFn(d); })
+        .text(function (d) { return formatFn(d); });
+    ticks
         .style('left', function (d) { return x(d) + 'px'; });
 
 });
@@ -103,6 +156,12 @@ tbone.createView('timeline', function () {
     var newEvents = allEvents.enter().append('event');
     newEvents
         .classed('moment', function (d) { return !!d.date; })
+        .append('div')
+        .append('span')
+        .text(function (d) { return d.desc; });
+    allEvents.exit().remove();
+    var blocks = [];
+    allEvents
         .each(function (d) {
             d.left = Math.round(x(d.date || d.startDate));
             d.right = Math.round(x(d.date || d.endDate));
@@ -115,12 +174,6 @@ tbone.createView('timeline', function () {
             // d.width = $(this).outerWidth();
             return d.left + 'px';
         })
-        .append('div')
-        .append('span')
-        .text(function (d) { return d.desc; });
-    allEvents.exit().remove();
-    var blocks = [];
-    allEvents
         .style('top', function (d) {
             var left, right, height;
             if (d.date) {
@@ -158,5 +211,24 @@ tbone.createView('timeline', function () {
             return top + 'px';
         });
 });
+
+function updateZoom () {
+    var x = zoom.x();
+    var min = Math.max(0, x.domain()[0]);
+    var max = Math.min(1, x.domain()[1]);
+    x.domain([min, max]);
+    zoom.x(x);
+    T('zoomLeft', min);
+    T('zoomRight', max);
+}
+
+var WIDTH = $('body').width();
+var zoom = d3.behavior.zoom()
+    .on("zoom", updateZoom)
+    .x(d3.scale.linear()
+        .domain([0, 1])
+        .range([0, WIDTH]));
+d3.select('body').call(zoom);
+updateZoom();
 
 tbone.render($('[tbone]'));
