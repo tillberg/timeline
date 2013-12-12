@@ -122,9 +122,7 @@ T('zoomDomain', function () {
 }());
 
 var PADDING = 10;
-function getScale (view) {
-    T('screen.width');
-    var width = view.$el.width();
+function getScale (width) {
     return d3.time.scale()
         .domain(T('zoomDomain') || [0, 1])
         .range([PADDING, width - PADDING]);
@@ -132,7 +130,9 @@ function getScale (view) {
 
 tbone.createView('axis', function () {
     var self = this;
-    var x = getScale(this);
+    T('screen.width');
+    var width = self.$el.width();
+    var x = getScale(width);
     var ticks = d3.select(this.el).selectAll('tick').data(x.ticks(), function (d) { return d; });
     var newTicks = ticks.enter().append('tick');
     ticks.exit().remove();
@@ -147,8 +147,25 @@ tbone.createView('axis', function () {
 var VERT_PADDING = 2;
 tbone.createView('timeline', function () {
     var self = this;
-    var x = getScale(self);
-    var events = _.map(T('events') || [], function (o) { return _.clone(o); });
+    T('screen.width');
+    var width = self.$el.width();
+    var x = getScale(width);
+    var minVisible = -50;
+    var maxVisible = width + 50;
+    var events = _.reduce(T('events') || [], function (memo, ev) {
+        var left = Math.round(x(ev.date || ev.startDate));
+        var right = Math.round(x(ev.date || ev.endDate))
+        if ((left > minVisible && left < maxVisible) ||
+            (right > minVisible && right < maxVisible) ||
+            (left <= minVisible && right >= maxVisible)) {
+            memo.push(_.extend({
+                left: left,
+                right: right,
+                width: right - left + 1
+            }, ev));
+        }
+        return memo;
+    }, []);
     var allEvents = d3.select(this.el)
         .selectAll('event')
         .data(events, function (d) {
@@ -163,11 +180,6 @@ tbone.createView('timeline', function () {
     allEvents.exit().remove();
     var blocks = [];
     allEvents
-        .each(function (d) {
-            d.left = Math.round(x(d.date || d.startDate));
-            d.right = Math.round(x(d.date || d.endDate));
-            d.width = d.right - d.left + 1;
-        })
         .style('width', function (d) {
             return d.width + 'px';
         })
