@@ -39,6 +39,14 @@ event {
         text-align: center;
     }
 
+    &:not(.moment) {
+        div {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
     &.moment {
         background: #000;
         margin-top: 6px;
@@ -53,6 +61,7 @@ event {
                 margin-top: -0.75em;
                 margin-left: -307px;
                 width: 300px;
+                text-overflow: ellipsis;
                 white-space: nowrap;
                 text-align: right;
             }

@@ -45,26 +45,25 @@ socket.on('data', function (data) {
     // console.log(data);
     var events = [];
     _.each(data, function (text, name) {
-        var currDate;
+        var currStartDate;
         var currEndDate;
         _.each(text.split('\n'), function (line) {
             line = line.replace(/^\s+|\s+$/g, '');
             if (!line) {
-                currDate = null;
+                currStartDate = null;
                 currEndDate = null;
-            } else if (!currDate) {
-                currDate = date(line.split('-')[0]);
-                currEndDate = date(line.split('-')[1]);
+            } else if (!currStartDate) {
+                currStartDate = date(line.split('-')[0]);
+                currEndDate = date(line.split('-')[1]) || currStartDate;
             } else {
-                events.push(_.extend({
+                var ev = {
                     id: nextId,
-                    desc: line
-                }, currEndDate ? {
-                    startDate: currDate,
-                    endDate: currEndDate
-                } : {
-                    date: currDate
-                }));
+                    desc: line,
+                    startDate: currStartDate,
+                    endDate: currEndDate,
+                    lengthMs: ms(currEndDate) - ms(currStartDate)
+                };
+                events.push(ev);
                 nextId++;
             }
         });
@@ -72,7 +71,7 @@ socket.on('data', function (data) {
     events = _.sortBy(events, function (event) {
         return event.date ? '2' : '1';
     });
-    // events.sort(function () { return Math.random() > 0.5; })
+    events = _.sortBy(events, function (ev) { return -ev.lengthMs; })
     T('events', events);
 });
 
@@ -144,6 +143,7 @@ tbone.createView('axis', function () {
 
 });
 
+var EVENT_HEIGHT = 23;
 var VERT_PADDING = 2;
 tbone.createView('timeline', function () {
     var self = this;
@@ -153,15 +153,17 @@ tbone.createView('timeline', function () {
     var minVisible = -50;
     var maxVisible = width + 50;
     var events = _.reduce(T('events') || [], function (memo, ev) {
-        var left = Math.round(x(ev.date || ev.startDate));
-        var right = Math.round(x(ev.date || ev.endDate))
+        var left = Math.round(x(ev.startDate));
+        var right = Math.round(x(ev.endDate))
         if ((left > minVisible && left < maxVisible) ||
             (right > minVisible && right < maxVisible) ||
             (left <= minVisible && right >= maxVisible)) {
+            var width = right - left + 1;
             memo.push(_.extend({
                 left: left,
                 right: right,
-                width: right - left + 1
+                width: width,
+                isMoment: width < 6
             }, ev));
         }
         return memo;
@@ -173,30 +175,29 @@ tbone.createView('timeline', function () {
         });
     var newEvents = allEvents.enter().append('event');
     newEvents
-        .classed('moment', function (d) { return !!d.date; })
         .append('div')
         .append('span')
         .text(function (d) { return d.desc; });
     allEvents.exit().remove();
     var blocks = [];
     allEvents
+        .classed('moment', function (d) { return !!d.isMoment; })
         .style('width', function (d) {
             return d.width + 'px';
         })
         .style('left', function (d) {
-            // d.width = $(this).outerWidth();
             return d.left + 'px';
         })
         .style('top', function (d) {
             var left, right, height;
-            if (d.date) {
+            if (d.isMoment) {
                 left = d.left - 4;
                 right = d.right + 4;
                 height = 200;
             } else {
                 left = d.left;
-                right = d.right = d.left + d.width;
-                height = d.height = $(this).outerHeight();
+                right = d.right;
+                height = d.height = EVENT_HEIGHT;
                 d.left += 2;
                 d.right -= 2;
             }
@@ -220,7 +221,7 @@ tbone.createView('timeline', function () {
                 });
             });
             d.bottom = d.top + d.height;
-            if (!d.date) {
+            if (!d.isMoment) {
                 blocks.push(d);
             }
             return top + 'px';
