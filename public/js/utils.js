@@ -1,6 +1,43 @@
 
+var rgxYear = /^\s*(\d\d\d\d)/;
+var rgxMonth = /^\s*(\w\w\w)\w*\s+(\d\d\d\d)/;
+var rgxDay = /^\s*(\w\w\w)\w*\s+(\d\d?)[,\s]+(\d\d\d\d)/;
+var monthsShort = 'jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec'.split(',');
+var monthsMap = _.reduce(monthsShort, function (memo, month, i) {
+    memo[month] = i;
+    return memo;
+}, {});
 function parseDate (str, roundUp) {
-
+    var yearMatch = str.match(rgxYear);
+    if (yearMatch) {
+        var year = parseFloat(yearMatch[1]);
+        return date('' + (year + (roundUp ? 1 : 0)));
+    }
+    var monthMatch = str.match(rgxMonth);
+    if (monthMatch) {
+        var month = monthsMap[monthMatch[1].toLowerCase()];
+        if (!month) {
+            console.error('Unknown month: ' + month + ' in ' + str);
+        }
+        var year = parseFloat(monthMatch[2]);
+        if (roundUp) {
+            month = month + 1;
+            if (month === monthsShort.length) {
+                month = 0;
+                year++;
+            }
+        }
+        return date(monthsShort[month] + ' ' + year);
+    }
+    var dayMatch = str.match(rgxDay);
+    if (dayMatch) {
+        var base = date(str);
+        if (roundUp) {
+            return date(ms(base) + 24 * 60 * 60 * 1000);
+        } else {
+            return base;
+        }
+    }
 }
 
 window.date = function(v) {
