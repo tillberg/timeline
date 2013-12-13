@@ -13,12 +13,15 @@ socket.on('data', function (data) {
     _.each(data, function (text, name) {
         var currStartDate;
         var currEndDate;
+        var currDateString;
         _.each(text.split('\n'), function (line) {
             line = line.replace(/^\s+|\s+$/g, '');
+            if (line.match(/^#/)) { return; }
             if (!line) {
                 currStartDate = null;
                 currEndDate = null;
             } else if (!currStartDate) {
+                currDateString = line;
                 var parts = line.split('-');
                 currStartDate = parseDate(parts[0]);
                 currEndDate = parseDate(parts[1] || parts[0], true);
@@ -26,6 +29,7 @@ socket.on('data', function (data) {
                 var ev = {
                     id: nextId,
                     desc: line,
+                    dateStr: currDateString,
                     startDate: currStartDate,
                     endDate: currEndDate,
                     lengthMs: ms(currEndDate) - ms(currStartDate)
@@ -110,6 +114,17 @@ tbone.createView('axis', function () {
 
 });
 
+$.fn.tooltip.defaults = {
+    animation: false,
+    placement: 'bottom',
+    selector: false,
+    template: '<div class="tooltip"><div class="tooltip-arrow"></div><div class="tooltip-inner"></div></div>',
+    trigger: 'hover',
+    title: '',
+    delay: { show: 0, hide: 0 },
+    html: true
+};
+
 var EVENT_HEIGHT = 23;
 var VERT_PADDING = 2;
 tbone.createView('timeline', function () {
@@ -120,12 +135,12 @@ tbone.createView('timeline', function () {
     var minVisible = -50;
     var maxVisible = width + 50;
     var events = _.reduce(T('events') || [], function (memo, ev) {
-        var left = Math.round(x(ev.startDate));
-        var right = Math.round(x(ev.endDate))
+        var left = x(ev.startDate);
+        var right = x(ev.endDate)
         if ((left > minVisible && left < maxVisible) ||
             (right > minVisible && right < maxVisible) ||
             (left <= minVisible && right >= maxVisible)) {
-            var width = right - left + 1;
+            var width = Math.round(right) - Math.round(left) + 1;
             memo.push(_.extend({
                 left: left,
                 right: right,
@@ -138,22 +153,34 @@ tbone.createView('timeline', function () {
     var allEvents = d3.select(this.el)
         .selectAll('event')
         .data(events, function (d) {
-            return d.id;
+            return d.id + ' ' + d.isMoment;
         });
-    var newEvents = allEvents.enter().append('event');
-    newEvents
+    allEvents.enter()
+        .append('event')
+        .attr('title', function (d) {
+            return (d.isMoment ? '' : d.desc + ' <br> ') + d.dateStr;
+        })
+        .each(function (d) {
+            $(this).tooltip({
+                placement: d.isMoment ? 'top': 'bottom'
+            });
+        })
         .append('div')
         .append('span')
         .text(function (d) { return d.desc; });
-    allEvents.exit().remove();
+    allEvents.exit()
+        .each(function (d) {
+            $(this).find('[data-original-title]').tooltip('destroy');
+        })
+        .remove();
     var blocks = [];
     allEvents
         .classed('moment', function (d) { return !!d.isMoment; })
         .style('width', function (d) {
-            return d.width + 'px';
+            return d.isMoment ? null : d.width + 'px';
         })
         .style('left', function (d) {
-            return d.left + 'px';
+            return Math.round(d.left) + 'px';
         })
         .style('top', function (d) {
             var left, right, height;

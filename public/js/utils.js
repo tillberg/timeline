@@ -2,6 +2,7 @@
 var rgxYear = /^\s*(\d\d\d\d)/;
 var rgxMonth = /^\s*(\w\w\w)\w*\s+(\d\d\d\d)/;
 var rgxDay = /^\s*(\w\w\w)\w*\s+(\d\d?)[,\s]+(\d\d\d\d)/;
+var rgxNow = /^\s*now/;
 var monthsShort = 'jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec'.split(',');
 var monthsMap = _.reduce(monthsShort, function (memo, month, i) {
     memo[month] = i;
@@ -38,6 +39,13 @@ function parseDate (str, roundUp) {
             return base;
         }
     }
+    var nowMatch = str.match(rgxNow);
+    if (rgxNow) {
+        var now = date('now');
+        now.setHours((roundUp ? 24 : 0), 0, 0, 0);
+        return now;
+    }
+    console.error('No parseDate match found for ' + str);
 }
 
 window.date = function(v) {

@@ -29,7 +29,7 @@ tick {
 }
 
 event {
-    background: rgba(186, 218, 85, 0.8);
+    background: rgba(186, 218, 85, 0.6);
     border-radius: 4px;
     padding: 0.2em;
     font-size: 0.8em;
@@ -40,10 +40,14 @@ event {
     }
 
     &:not(.moment) {
+        &:hover {
+            background: rgba(186, 218, 85, 1);
+        }
         div {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            cursor: default;
         }
     }
 
@@ -67,4 +71,34 @@ event {
             }
         }
     }
+}
+
+.tooltip {
+    color: #fff;
+    display: block;
+    visibility: visible;
+    letter-spacing: .4px;
+    padding: 5px;
+    position: absolute;
+    pointer-events: none;
+    word-wrap: break-word;
+    z-index: 10002;
+    font-size: 10px;
+
+    .tooltip-inner {
+        background-color: rgba(0, 0, 0, 0.9);
+        border-radius: 3px;
+        max-width: 350px;
+        padding: 3px 8px;
+        color: #fff;
+        text-decoration: none;
+        text-align: center;
+    }
+
+    .tooltip-arrow {
+        position: absolute;
+        width: 0;
+        height: 0;
+    }
+
 }
