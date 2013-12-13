@@ -16,7 +16,7 @@ function parseDate (str, roundUp) {
     var monthMatch = str.match(rgxMonth);
     if (monthMatch) {
         var month = monthsMap[monthMatch[1].toLowerCase()];
-        if (!month) {
+        if (month == null) {
             console.error('Unknown month: ' + month + ' in ' + str);
         }
         var year = parseFloat(monthMatch[2]);

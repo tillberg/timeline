@@ -19,8 +19,9 @@ socket.on('data', function (data) {
                 currStartDate = null;
                 currEndDate = null;
             } else if (!currStartDate) {
-                currStartDate = date(line.split('-')[0]);
-                currEndDate = date(line.split('-')[1]) || currStartDate;
+                var parts = line.split('-');
+                currStartDate = parseDate(parts[0]);
+                currEndDate = parseDate(parts[1] || parts[0], true);
             } else {
                 var ev = {
                     id: nextId,
