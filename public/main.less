@@ -29,10 +29,9 @@ tick {
 }
 
 event {
-    background: rgba(186, 218, 85, 0.6);
-    border-radius: 4px;
-    padding: 0.2em;
+    background: chocolate;
     font-size: 0.8em;
+    border-radius: 0.4em;
 
     div {
         position: relative;
@@ -40,20 +39,23 @@ event {
     }
 
     &:not(.moment) {
-        &:hover {
-            background: rgba(186, 218, 85, 1);
+        &:hover div {
+            background: rgba(255, 255, 255, 0);
         }
         div {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
             cursor: default;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 0.2em;
         }
     }
 
     &.moment {
-        background: #000;
+        background: chocolate;
         margin-top: 6px;
+        padding: 0.2em;
         height: 0px;
 
         div {

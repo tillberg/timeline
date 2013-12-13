@@ -6,6 +6,7 @@ socket.once('reload', function () {
     }, 100);
 });
 
+var rgxMetadata = /^(color)\:\s*(.*)$/
 var nextId = 1;
 socket.on('data', function (data) {
     // console.log(data);
@@ -14,6 +15,7 @@ socket.on('data', function (data) {
         var currStartDate;
         var currEndDate;
         var currDateString;
+        var color;
         _.each(text.split('\n'), function (line) {
             line = line.replace(/^\s+|\s+$/g, '');
             if (line.match(/^#/)) { return; }
@@ -21,14 +23,22 @@ socket.on('data', function (data) {
                 currStartDate = null;
                 currEndDate = null;
             } else if (!currStartDate) {
-                currDateString = line;
-                var parts = line.split('-');
-                currStartDate = parseDate(parts[0]);
-                currEndDate = parseDate(parts[1] || parts[0], true);
+                var mdMatch = line.match(rgxMetadata);
+                if (mdMatch) {
+                    if (mdMatch[1] === 'color') {
+                        color = mdMatch[2];
+                    }
+                } else {
+                    currDateString = line;
+                    var parts = line.split('-');
+                    currStartDate = parseDate(parts[0]);
+                    currEndDate = parseDate(parts[1] || parts[0], true);
+                }
             } else {
                 var ev = {
                     id: nextId,
                     desc: line,
+                    color: color,
                     dateStr: currDateString,
                     startDate: currStartDate,
                     endDate: currEndDate,
@@ -157,6 +167,9 @@ tbone.createView('timeline', function () {
         });
     allEvents.enter()
         .append('event')
+        .style('background-color', function (d) {
+            return d.color || null;
+        })
         .attr('title', function (d) {
             return (d.isMoment ? '' : d.desc + ' <br> ') + d.dateStr;
         })
