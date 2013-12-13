@@ -183,7 +183,7 @@ tbone.createView('timeline', function () {
         .text(function (d) { return d.desc; });
     allEvents.exit()
         .each(function (d) {
-            $(this).find('[data-original-title]').tooltip('destroy');
+            $(this).filter('[data-original-title]').tooltip('destroy');
         })
         .remove();
     var blocks = [];
