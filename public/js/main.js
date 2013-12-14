@@ -141,98 +141,103 @@ tbone.createView('timeline', function () {
     var self = this;
     T('screen.width');
     var width = self.$el.width();
-    var x = getScale(width);
-    var minVisible = -50;
-    var maxVisible = width + 50;
-    var events = _.reduce(T('events') || [], function (memo, ev) {
-        var left = x(ev.startDate);
-        var right = x(ev.endDate)
-        if ((left > minVisible && left < maxVisible) ||
-            (right > minVisible && right < maxVisible) ||
-            (left <= minVisible && right >= maxVisible)) {
-            var width = Math.round(right) - Math.round(left) + 1;
-            memo.push(_.extend({
-                left: left,
-                right: right,
-                width: width,
-                isMoment: width < 6
-            }, ev));
-        }
-        return memo;
-    }, []);
-    var allEvents = d3.select(this.el)
-        .selectAll('event')
-        .data(events, function (d) {
-            return d.id + ' ' + d.isMoment;
-        });
-    allEvents.enter()
-        .append('event')
-        .style('background-color', function (d) {
-            return d.color || null;
-        })
-        .attr('title', function (d) {
-            return (d.isMoment ? '' : d.desc + ' <br> ') + d.dateStr;
-        })
-        .each(function (d) {
-            $(this).tooltip({
-                placement: d.isMoment ? 'top': 'bottom'
-            });
-        })
-        .append('div')
-        .append('span')
-        .text(function (d) { return d.desc; });
-    allEvents.exit()
-        .each(function (d) {
-            $(this).filter('[data-original-title]').tooltip('destroy');
-        })
-        .remove();
-    var blocks = [];
-    allEvents
-        .classed('moment', function (d) { return !!d.isMoment; })
-        .style('width', function (d) {
-            return d.isMoment ? null : d.width + 'px';
-        })
-        .style('left', function (d) {
-            return Math.round(d.left) + 'px';
-        })
-        .style('top', function (d) {
-            var left, right, height;
-            if (d.isMoment) {
-                left = d.left - 4;
-                right = d.right + 4;
-                height = 200;
-            } else {
-                left = d.left;
-                right = d.right;
-                height = d.height = EVENT_HEIGHT;
-                d.left += 2;
-                d.right -= 2;
+    var $tmp = $('<ul class="axis"></ul>').appendTo('body');
+    var axisHeight = $tmp.outerHeight();
+    $tmp.remove();
+    T(function () {
+        var x = getScale(width);
+        var minVisible = -50;
+        var maxVisible = width + 50;
+        var events = _.reduce(T('events') || [], function (memo, ev) {
+            var left = x(ev.startDate);
+            var right = x(ev.endDate)
+            if ((left > minVisible && left < maxVisible) ||
+                (right > minVisible && right < maxVisible) ||
+                (left <= minVisible && right >= maxVisible)) {
+                var width = Math.round(right) - Math.round(left) + 1;
+                memo.push(_.extend({
+                    left: left,
+                    right: right,
+                    width: width,
+                    isMoment: width < 6
+                }, ev));
             }
-            var attemptTops = [0];
-            var occupiedRanges = _.reduce(blocks, function (memo, block) {
-                if ((block.left <= right && block.left >= left) ||
-                    (block.right <= right && block.right >= left) ||
-                    (block.left <= left && block.right >= right)) {
-                    memo.push(block);
-                    attemptTops.push(block.bottom + VERT_PADDING);
-                }
-                return memo;
-            }, []);
-            attemptTops = _.sortBy(attemptTops, function (a) { return a; })
-            var top = d.top = _.find(attemptTops, function (topTry) {
-                var bottomTry = topTry + height;
-                return _.all(occupiedRanges, function (block) {
-                    return !((block.top <= bottomTry && block.top >= topTry) ||
-                             (block.bottom <= bottomTry && block.bottom >= topTry) ||
-                             (block.top <= topTry && block.bottom >= bottomTry));
+            return memo;
+        }, []);
+        var allEvents = d3.select(self.el)
+            .selectAll('event')
+            .data(events, function (d) {
+                return d.id + ' ' + d.isMoment;
+            });
+        allEvents.enter()
+            .append('event')
+            .style('background-color', function (d) {
+                return d.color || null;
+            })
+            .attr('title', function (d) {
+                return (d.isMoment ? '' : d.desc + ' <br> ') + d.dateStr;
+            })
+            .each(function (d) {
+                $(this).tooltip({
+                    placement: d.isMoment ? 'bottom': 'bottom'
                 });
+            })
+            .append('div')
+            .append('span')
+            .text(function (d) { return d.desc; });
+        allEvents.exit()
+            .each(function (d) {
+                $(this).filter('[data-original-title]').tooltip('destroy');
+            })
+            .remove();
+        var blocks = [];
+        allEvents
+            .classed('moment', function (d) { return !!d.isMoment; })
+            .style('width', function (d) {
+                return d.isMoment ? null : d.width + 'px';
+            })
+            .style('left', function (d) {
+                return Math.round(d.left) + 'px';
+            })
+            .style('bottom', function (d) {
+                var left, right, height;
+                if (d.isMoment) {
+                    left = d.left - 5;
+                    right = d.right + 5;
+                    height = 200;
+                } else {
+                    left = d.left;
+                    right = d.right;
+                    height = d.height = EVENT_HEIGHT;
+                    d.left += 2;
+                    d.right -= 2;
+                }
+                var attemptTops = [0];
+                var occupiedRanges = _.reduce(blocks, function (memo, block) {
+                    if ((block.left <= right && block.left >= left) ||
+                        (block.right <= right && block.right >= left) ||
+                        (block.left <= left && block.right >= right)) {
+                        memo.push(block);
+                        attemptTops.push(block.bottom + VERT_PADDING);
+                    }
+                    return memo;
+                }, []);
+                attemptTops = _.sortBy(attemptTops, function (a) { return a; })
+                var top = d.top = _.find(attemptTops, function (topTry) {
+                    var bottomTry = topTry + height;
+                    return _.all(occupiedRanges, function (block) {
+                        return !((block.top <= bottomTry && block.top >= topTry) ||
+                                 (block.bottom <= bottomTry && block.bottom >= topTry) ||
+                                 (block.top <= topTry && block.bottom >= bottomTry));
+                    });
+                });
+                d.bottom = d.top + d.height;
+                if (!d.isMoment) {
+                    blocks.push(d);
+                }
+                return (top + axisHeight) + 'px';
             });
-            d.bottom = d.top + d.height;
-            if (!d.isMoment) {
-                blocks.push(d);
-            }
-            return top + 'px';
-        });
+    });
 });
 
 function updateZoom () {

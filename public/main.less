@@ -13,7 +13,9 @@ html, body {
 
 .timeline {
     position: relative;
-    top: 24px;
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
 }
 
 tick,
@@ -23,9 +25,22 @@ event {
     text-align: center;
 }
 
+.axis {
+    position: absolute;
+    width: 100%;
+    padding-top: 3px;
+    height: 50px;
+    bottom: 0;
+}
+
 tick {
     width: 100px;
     margin-left: -50px;
+    font-size: 0.9em;
+    // this is a 1x2 black tick mark
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAD0lEQVQIW2NkYGD4zwgiAAcSAgGwbbkAAAAAAElFTkSuQmCC");
+    background-repeat: no-repeat;
+    background-position: 50px 0;
 }
 
 event {
@@ -64,12 +79,12 @@ event {
             span {
                 font-size: 0.8em;
                 position: absolute;
-                margin-top: -0.75em;
-                margin-left: -307px;
-                width: 300px;
+                margin-top: -0.85em;
+                margin-left: 7px;
+                padding-right: 0.8em;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-                text-align: right;
+                text-align: left;
             }
         }
     }
