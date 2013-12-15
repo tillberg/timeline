@@ -6,53 +6,49 @@ socket.once('reload', function () {
     }, 100);
 });
 
-var rgxMetadata = /^(color)\:\s*(.*)$/
+var DAY_MS = 24 * 60 * 60 * 1000;
+
+var rgxMetadata = /^(\w+)\:\s*(.*)$/
 var nextId = 1;
 socket.on('data', function (data) {
     // console.log(data);
     var events = [];
     _.each(data, function (text, name) {
-        var currStartDate;
-        var currEndDate;
+        var currDateRange;
         var currDateString;
-        var color;
+        var props = {};
         _.each(text.split('\n'), function (line) {
             line = line.replace(/^\s+|\s+$/g, '');
             if (line.match(/^#/)) { return; }
             if (!line) {
-                currStartDate = null;
-                currEndDate = null;
-            } else if (!currStartDate) {
+                currDateRange = null;
+            } else if (!currDateRange) {
                 var mdMatch = line.match(rgxMetadata);
                 if (mdMatch) {
-                    if (mdMatch[1] === 'color') {
-                        color = mdMatch[2];
-                    }
+                    var num = parseFloat(mdMatch[2]);
+                    props[mdMatch[1]] = isNaN(num) ? mdMatch[2] : num;
                 } else {
+                    if (line)
                     currDateString = line;
-                    var parts = line.split('-');
-                    currStartDate = parseDate(parts[0]);
-                    currEndDate = parseDate(parts[1] || parts[0], true);
+                    currDateRange = parseDateRange(line);
                 }
             } else {
-                var ev = {
+                var ev = _.extend({
                     id: nextId,
                     desc: line,
-                    color: color,
                     dateStr: currDateString,
-                    startDate: currStartDate,
-                    endDate: currEndDate,
-                    lengthMs: ms(currEndDate) - ms(currStartDate)
-                };
+                    startDate: currDateRange.start,
+                    endDate: currDateRange.end,
+                    lengthMs: ms(currDateRange.end) - ms(currDateRange.start)
+                }, props);
                 events.push(ev);
                 nextId++;
             }
         });
     });
-    events = _.sortBy(events, function (event) {
-        return event.date ? '2' : '1';
-    });
-    events = _.sortBy(events, function (ev) { return -ev.lengthMs; })
+    events = _.sortBy(events, function (ev) {
+        return -(ev.lengthMs * (ev.weight || 1) + 10 * (ev.weight || 1) * DAY_MS);
+    })
     T('events', events);
 });
 

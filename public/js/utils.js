@@ -1,51 +1,90 @@
 
-var rgxYear = /^\s*(\d\d\d\d)/;
-var rgxMonth = /^\s*(\w\w\w)\w*\s+(\d\d\d\d)/;
-var rgxDay = /^\s*(\w\w\w)\w*\s+(\d\d?)[,\s]+(\d\d\d\d)/;
-var rgxNow = /^\s*now/;
 var monthsShort = 'jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec'.split(',');
 var monthsMap = _.reduce(monthsShort, function (memo, month, i) {
     memo[month] = i;
     return memo;
 }, {});
-function parseDate (str, roundUp) {
-    var yearMatch = str.match(rgxYear);
-    if (yearMatch) {
-        var year = parseFloat(yearMatch[1]);
-        return date('' + (year + (roundUp ? 1 : 0)));
+
+function getShortMonth (s) {
+    return s && s.substring(0, 3).toLowerCase();
+}
+function parseNum (s) {
+    return s && parseFloat(s);
+}
+
+var rgxDateRange = /^\s*([a-zA-Z][a-zA-Z][a-zA-Z]\w*)?[,\s]*((\d\d?)[,\s]+)?(\d\d\d\d)?[^-]*-?\s*([a-zA-Z][a-zA-Z][a-zA-Z]\w*)?[,\s]*((\d\d?)[,\s]+)?(\d\d\d\d)?/;
+function parseDateRange (str) {
+    var match = str.match(rgxDateRange);
+    if (!match) {
+        console.error('Unable to parse date range [' + str + ']');
+        return { start: null, end: null };
     }
-    var monthMatch = str.match(rgxMonth);
-    if (monthMatch) {
-        var month = monthsMap[monthMatch[1].toLowerCase()];
-        if (month == null) {
-            console.error('Unknown month: ' + month + ' in ' + str);
-        }
-        var year = parseFloat(monthMatch[2]);
-        if (roundUp) {
-            month = month + 1;
-            if (month === monthsShort.length) {
-                month = 0;
-                year++;
-            }
-        }
-        return date(monthsShort[month] + ' ' + year);
+    var m0, d0, y0, m1, d1, y1;
+    var month0 = getShortMonth(match[1]);
+    var mnow = date().getMonth(), dnow = date().getDate(), ynow = date().getFullYear();
+
+    if (month0 === 'now') {
+        m0 = mnow;
+        d0 = dnow;
+        y0 = ynow;
+    } else {
+        m0 = monthsMap[month0];
+        d0 = parseNum(match[3]);
+        y0 = parseNum(match[4]);
     }
-    var dayMatch = str.match(rgxDay);
-    if (dayMatch) {
-        var base = date(str);
-        if (roundUp) {
-            return date(ms(base) + 24 * 60 * 60 * 1000);
-        } else {
-            return base;
-        }
+    var month1 = getShortMonth(match[5]);
+    if (month1 === 'now') {
+        m1 = mnow;
+        d1 = dnow;
+        y1 = ynow;
+    } else {
+        m1 = monthsMap[month1];
+        d1 = parseNum(match[7]);
+        y1 = parseNum(match[8]);
     }
-    var nowMatch = str.match(rgxNow);
-    if (rgxNow) {
-        var now = date('now');
-        now.setHours((roundUp ? 24 : 0), 0, 0, 0);
-        return now;
+    if ((month0 && m0 == null) || (month1 && m1 == null)) {
+        console.error('Unable to parse month(s) from [' + str + ']', match, m0, m1);
     }
-    console.error('No parseDate match found for ' + str);
+    // If only one date specified, use as both start and end
+    if (y1 == null && m1 == null && d1 == null) {
+        y1 = y0;
+        m1 = m0;
+        d1 = d0;
+    }
+    // Handle "MMM dd - dd, YYYY"
+    if (y0 == null && m1 == null) {
+        y0 = y1;
+        m1 = m0;
+    }
+    var start = {
+        year: y0 || y1,
+        month: m0 || 0,
+        day: d0 || 0
+    };
+    var end = {
+        year: y1 || y0,
+        month: m1 || 0,
+        day: d1 || 0
+    };
+    // console.log(str, match.join(' | '));
+    // console.log(str, start, end);
+
+    if (d1 != null) {
+        end.day += 1;
+    } else if (m1 != null) {
+        end.month += 1;
+    } else {
+        end.year += 1;
+    }
+    // console.log(str, start, end);
+
+    var startDate = new Date(start.year, start.month || 0, start.day || 1, 0, 0, 0, 0);
+    var endDate = new Date(end.year, end.month || 0, end.day || 1, 0, 0, 0, 0);
+    // console.log(str, startDate + '', endDate + '');
+    return {
+        start: startDate,
+        end: endDate
+    };
 }
 
 window.date = function(v) {
