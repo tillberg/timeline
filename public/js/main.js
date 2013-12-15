@@ -109,15 +109,18 @@ tbone.createView('axis', function () {
     T('screen.width');
     var width = self.$el.width();
     var x = getScale(width);
-    var ticks = d3.select(this.el).selectAll('tick').data(x.ticks(), function (d) { return d; });
-    var newTicks = ticks.enter().append('tick');
-    ticks.exit().remove();
+    var _ticks = x.ticks();
     var formatFn = x.tickFormat();
-    newTicks
-        .text(function (d) { return formatFn(d); });
-    ticks
-        .style('left', function (d) { return x(d) + 'px'; });
 
+    var ticks = d3.select(this.el).selectAll('tick').data(_ticks, function (d) { return d; });
+    ticks.enter().append('tick').text(function (d) { return formatFn(d); });
+    ticks.exit().remove();
+    ticks.style('left', function (d) { return x(d) + 'px'; });
+
+    var marks = d3.select(this.el).selectAll('mark').data(_ticks, function (d) { return d; });
+    marks.enter().append('mark');
+    marks.exit().remove();
+    marks.style('left', function (d) { return x(d) + 'px'; });
 });
 
 $.fn.tooltip.defaults = {
@@ -132,7 +135,7 @@ $.fn.tooltip.defaults = {
 };
 
 var EVENT_HEIGHT = 23;
-var VERT_PADDING = 2;
+var VERT_PADDING = 6;
 tbone.createView('timeline', function () {
     var self = this;
     T('screen.width');

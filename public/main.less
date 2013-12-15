@@ -9,6 +9,7 @@ html, body {
     overflow: hidden;
     margin: 0;
     padding: 0;
+    background: #eee;
 }
 
 .timeline {
@@ -19,7 +20,8 @@ html, body {
 }
 
 tick,
-event {
+event,
+mark {
     position: absolute;
     display: inline-block;
     text-align: center;
@@ -34,19 +36,23 @@ event {
 }
 
 tick {
+    color: #000;
     width: 100px;
     margin-left: -50px;
     font-size: 0.9em;
-    // this is a 1x2 black tick mark
-    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAD0lEQVQIW2NkYGD4zwgiAAcSAgGwbbkAAAAAAElFTkSuQmCC");
-    background-repeat: no-repeat;
-    background-position: 50px 0;
+    margin-top: 5px;
+}
+
+mark {
+    background: #000;
+    margin-left: -1px;
+    width: 2px;
+    height: 5px;
 }
 
 event {
     background: chocolate;
     font-size: 0.8em;
-    border-radius: 0.4em;
 
     div {
         position: relative;
@@ -54,6 +60,7 @@ event {
     }
 
     &:not(.moment) {
+        border: 1px solid transparent;
         &:hover div {
             background: rgba(255, 255, 255, 0);
         }
@@ -70,12 +77,14 @@ event {
     &.moment {
         padding: 0.2em;
         height: 0px;
+        border-radius: 0.4em;
 
         div {
             -webkit-transform: rotate(-90deg);
             cursor: default;
 
             span {
+                color: #000;
                 font-size: 0.8em;
                 position: absolute;
                 margin-top: -0.85em;
