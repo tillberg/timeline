@@ -12,7 +12,8 @@ function parseNum (s) {
     return s && parseFloat(s);
 }
 
-var rgxDateRange = /^\s*([a-zA-Z][a-zA-Z][a-zA-Z]\w*)?[,\s]*((\d\d?)[,\s]+)?(\d\d\d\d)?[^-]*-?\s*([a-zA-Z][a-zA-Z][a-zA-Z]\w*)?[,\s]*((\d\d?)[,\s]+)?(\d\d\d\d)?/;
+// \u2013 is a dash of some sort
+var rgxDateRange = /^\s*([a-zA-Z][a-zA-Z][a-zA-Z][\w.]*[,\s]*)?((\d\d?)[,\s]+)?(\d\d\d\d)?[^-\u2013]*[-\u2013]?\s*([a-zA-Z][a-zA-Z][a-zA-Z][\w.]*[,\s]*)?((\d\d?)[,\s]+)?(\d\d\d\d)?/;
 function parseDateRange (str) {
     var match = str.match(rgxDateRange);
     if (!match) {

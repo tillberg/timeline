@@ -33,6 +33,10 @@ test('parseDateRange Full', function () {
     eqstr(dr.start, date('Sept 2011'));
     eqstr(dr.end, date('Feb 2012'));
 
+    dr = parseDateRange('Dec. 15, 1988 – Jan. 6, 1989');
+    eqstr(dr.start, date('Dec 15 1988'));
+    eqstr(dr.end, date('Jan 7 1989'));
+
     dr = parseDateRange('now');
     var today = date('now');
     today.setHours(0, 0, 0, 0);
