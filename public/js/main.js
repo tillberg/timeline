@@ -109,7 +109,13 @@ tbone.createView('axis', function () {
     T('screen.width');
     var width = self.$el.width();
     var x = getScale(width);
-    var _ticks = x.ticks();
+    // hack the domain so that ticks don't disappear suddenly at screen edges
+    var domain = x.domain();
+    var domainWidth = ms(domain[1]) - ms(domain[0]);
+    var domainStart = date(ms(domain[0]) - 0.1 * domainWidth);
+    var domainEnd = date(ms(domain[1]) + 0.1 * domainWidth);
+    var _x = d3.time.scale().domain([ domainStart, domainEnd ]);
+    var _ticks = _x.ticks();
     var formatFn = x.tickFormat();
 
     var ticks = d3.select(this.el).selectAll('tick').data(_ticks, function (d) { return d; });
