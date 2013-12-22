@@ -19,23 +19,26 @@ socket.on('data', function (data) {
         var props = {};
         var lastYear;
         var descLines = [];
+        function flush () {
+            if (currDateRange && descLines.length) {
+                var ev = _.extend({
+                    id: nextId,
+                    desc: descLines.join('\n'),
+                    descShort: descLines[0].match(/^[^\(]*/)[0],
+                    dateStr: currDateString,
+                    startDate: currDateRange.start,
+                    endDate: currDateRange.end,
+                    lengthMs: ms(currDateRange.end) - ms(currDateRange.start)
+                }, props);
+                events.push(ev);
+                nextId++;
+            }
+        }
         _.each(text.split('\n'), function (line) {
             line = line.replace(/^\s+|\s+$/g, '');
             if (line.match(/^#/)) { return; }
             if (!line) {
-                if (currDateRange && descLines.length) {
-                    var ev = _.extend({
-                        id: nextId,
-                        desc: descLines.join('\n'),
-                        descShort: descLines[0].match(/^[^\(]*/)[0],
-                        dateStr: currDateString,
-                        startDate: currDateRange.start,
-                        endDate: currDateRange.end,
-                        lengthMs: ms(currDateRange.end) - ms(currDateRange.start)
-                    }, props);
-                    events.push(ev);
-                    nextId++;
-                }
+                flush();
                 descLines = [];
                 currDateRange = null;
             } else if (!currDateRange) {
@@ -52,6 +55,7 @@ socket.on('data', function (data) {
                 descLines.push(line);
             }
         });
+        flush();
     });
     events = _.sortBy(events, function (ev) {
         return -(ev.lengthMs * (ev.weight || 1) + 10 * (ev.weight || 1) * DAY_MS);
