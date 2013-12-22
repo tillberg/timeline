@@ -29,6 +29,8 @@ node /home/me/gitstuff/timeline/lib/serve.js
 
 Then point your browser to http://localhost:8888/.
 
+![screenshot](https://raw.github.com/tillberg/timeline/master/example.png)
+
 ## Timeline file format
 
 Use plain text files to create your timeline.  For example:
