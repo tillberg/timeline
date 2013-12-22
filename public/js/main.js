@@ -18,10 +18,25 @@ socket.on('data', function (data) {
         var currDateString;
         var props = {};
         var lastYear;
+        var descLines = [];
         _.each(text.split('\n'), function (line) {
             line = line.replace(/^\s+|\s+$/g, '');
             if (line.match(/^#/)) { return; }
             if (!line) {
+                if (currDateRange && descLines.length) {
+                    var ev = _.extend({
+                        id: nextId,
+                        desc: descLines.join('\n'),
+                        descShort: descLines[0].match(/^[^\(]*/)[0],
+                        dateStr: currDateString,
+                        startDate: currDateRange.start,
+                        endDate: currDateRange.end,
+                        lengthMs: ms(currDateRange.end) - ms(currDateRange.start)
+                    }, props);
+                    events.push(ev);
+                    nextId++;
+                }
+                descLines = [];
                 currDateRange = null;
             } else if (!currDateRange) {
                 var mdMatch = line.match(rgxMetadata);
@@ -34,16 +49,7 @@ socket.on('data', function (data) {
                     lastYear = currDateRange.end.getFullYear();
                 }
             } else {
-                var ev = _.extend({
-                    id: nextId,
-                    desc: line,
-                    dateStr: currDateString,
-                    startDate: currDateRange.start,
-                    endDate: currDateRange.end,
-                    lengthMs: ms(currDateRange.end) - ms(currDateRange.start)
-                }, props);
-                events.push(ev);
-                nextId++;
+                descLines.push(line);
             }
         });
     });
@@ -181,7 +187,7 @@ tbone.createView('timeline', function () {
                 return d.color || null;
             })
             .attr('title', function (d) {
-                return (d.isMoment ? '' : d.desc + ' <br> ') + d.dateStr;
+                return d.dateStr + '<br>' + d.desc.replace(/\n/g, ' <br> ');
             })
             .each(function (d) {
                 $(this).tooltip({
@@ -190,7 +196,7 @@ tbone.createView('timeline', function () {
             })
             .append('div')
             .append('span')
-            .text(function (d) { return d.desc; });
+            .text(function (d) { return d.descShort; });
         allEvents.exit()
             .each(function (d) {
                 $(this).filter('[data-original-title]').tooltip('destroy');
