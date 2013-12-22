@@ -70,4 +70,34 @@ test('parseDateRange Partial', function () {
     dr = parseDateRange('March 15', { currYear: 2010 });
     eqstr(dr.start, date('March 15, 2010'));
     eqstr(dr.end, date('March 16, 2010'));
+
+    dr = parseDateRange('? - March 15, 2009');
+    eqstr(dr.start, date('March 15, 2009'));
+    eqstr(dr.end, date('March 16, 2009'));
+});
+
+test('parseDateRange seasons', function () {
+    dr = parseDateRange('Summer 2002');
+    eqstr(dr.start, date('Jun 20, 2002'));
+    eqstr(dr.end, date('Sept 20, 2002'));
+
+    dr = parseDateRange('Winter 2002');
+    eqstr(dr.start, date('December 20, 2001'));
+    eqstr(dr.end, date('March 20, 2002'));
+
+    dr = parseDateRange('Spring 1999');
+    eqstr(dr.start, date('March 20, 1999'));
+    eqstr(dr.end, date('June 20, 1999'));
+
+    dr = parseDateRange('Fall 2012');
+    eqstr(dr.start, date('September 20, 2012'));
+    eqstr(dr.end, date('December 20, 2012'));
+
+    dr = parseDateRange('Winter - Spring 1999');
+    eqstr(dr.start, date('December 20, 1998'));
+    eqstr(dr.end, date('June 20, 1999'));
+
+    dr = parseDateRange('June 15, 1997 - Winter 1999');
+    eqstr(dr.start, date('June 15, 1997'));
+    eqstr(dr.end, date('March 20, 1999'));
 });

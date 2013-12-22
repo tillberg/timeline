@@ -1,9 +1,17 @@
 
-var monthsShort = 'jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec'.split(',');
+var monthsShort = 'jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec,win,spr,sum,fal'.split(',');
 var monthsMap = _.reduce(monthsShort, function (memo, month, i) {
     memo[month] = i;
     return memo;
 }, {});
+
+// Yes, this is for the northern hemisphere.  Sorry.
+var seasons = [
+    [[monthsMap.dec, 20, -1], [monthsMap.mar, 20,  0]],
+    [[monthsMap.mar, 20,  0], [monthsMap.jun, 20,  0]],
+    [[monthsMap.jun, 20,  0], [monthsMap.sep, 20,  0]],
+    [[monthsMap.sep, 20,  0], [monthsMap.dec, 20,  0]],
+];
 
 function getShortMonth (s) {
     return s && s.substring(0, 3).toLowerCase();
@@ -31,6 +39,9 @@ function parseDateRange (str, opts) {
         y0 = ynow;
     } else {
         m0 = monthsMap[month0];
+        if (m0 == null && seasons[month0]) {
+            m0 = seasons[month0].start;
+        }
         d0 = parseNum(match[3]);
         y0 = parseNum(match[4]);
     }
@@ -41,6 +52,9 @@ function parseDateRange (str, opts) {
         y1 = ynow;
     } else {
         m1 = monthsMap[month1];
+        if (m1 == null && seasons[month1]) {
+            m1 = seasons[month1].end;
+        }
         d1 = parseNum(match[8]);
         y1 = parseNum(match[9]);
     }
@@ -62,6 +76,12 @@ function parseDateRange (str, opts) {
         y0 = y1;
         m1 = m0;
     }
+    // Handle ??? - Date by just ignoring the dash
+    if (d0 == null && m0 == null && y0 == null) {
+        d0 = d1;
+        m0 = m1;
+        y0 = y1;
+    }
     var start = {
         year: y0 || y1,
         month: m0 || 0,
@@ -75,7 +95,16 @@ function parseDateRange (str, opts) {
     // console.log(str, match.join(' | '));
     // console.log(str, start, end);
 
-    if (d1 != null) {
+    if (start.month >= 12) {
+        start.year += seasons[start.month - 12][0][2];
+        start.day = seasons[start.month - 12][0][1];
+        start.month = seasons[start.month - 12][0][0];
+    }
+    if (end.month >= 12) {
+        end.year += seasons[end.month - 12][1][2];
+        end.day = seasons[end.month - 12][1][1];
+        end.month = seasons[end.month - 12][1][0];
+    } else if (d1 != null) {
         end.day += 1;
     } else if (m1 != null) {
         end.month += 1;
@@ -87,6 +116,11 @@ function parseDateRange (str, opts) {
     var startDate = new Date(start.year, start.month || 0, start.day || 1, 0, 0, 0, 0);
     var endDate = new Date(end.year, end.month || 0, end.day || 1, 0, 0, 0, 0);
     // console.log(str, startDate + '', endDate + '');
+
+    if (endDate.getTime() < startDate.getTime()) {
+        console.warn('Date range parsed from [' + str + '] is out of order: ' + startDate + ' to ' + endDate);
+    }
+
     return {
         start: startDate,
         end: endDate
