@@ -3,7 +3,14 @@ Timeline
 
 ## Getting Started
 
-You'll need to install node and npm.  To install `timeline` dependencies,
+### Prerequisites
+
+You'll need to install node.js and npm first.  You can get them by hitting
+the `install` button over at http://nodejs.org/.
+
+### Dependencies
+
+To install `timeline` dependencies,
 run:
 
 ``` sh
