@@ -17,6 +17,7 @@ socket.on('data', function (data) {
         var currDateRange;
         var currDateString;
         var props = {};
+        var lastYear;
         _.each(text.split('\n'), function (line) {
             line = line.replace(/^\s+|\s+$/g, '');
             if (line.match(/^#/)) { return; }
@@ -28,9 +29,9 @@ socket.on('data', function (data) {
                     var num = parseFloat(mdMatch[2]);
                     props[mdMatch[1]] = isNaN(num) ? mdMatch[2] : num;
                 } else {
-                    if (line)
                     currDateString = line;
-                    currDateRange = parseDateRange(line);
+                    currDateRange = parseDateRange(line, { currYear: lastYear });
+                    lastYear = currDateRange.end.getFullYear();
                 }
             } else {
                 var ev = _.extend({

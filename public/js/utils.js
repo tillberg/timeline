@@ -13,8 +13,9 @@ function parseNum (s) {
 }
 
 // \u2013 is a dash of some sort
-var rgxDateRange = /^\s*([a-zA-Z][a-zA-Z][a-zA-Z][\w.]*[,\s]*)?((\d\d?)[,\s]+)?(\d\d\d\d)?[^-\u2013]*[-\u2013]?\s*([a-zA-Z][a-zA-Z][a-zA-Z][\w.]*[,\s]*)?((\d\d?)[,\s]+)?(\d\d\d\d)?/;
-function parseDateRange (str) {
+var rgxDateRange = /^\s*([a-zA-Z][a-zA-Z][a-zA-Z][\w.]*[,\s]*)?((\d\d?)\b[,\s]*)?(\d\d\d\d)?[^-\u2013]*([-\u2013]\s*([a-zA-Z][a-zA-Z][a-zA-Z][\w.]*[,\s]*)?((\d\d?)\b[,\s]+)?(\d\d\d\d)?)?/;
+function parseDateRange (str, opts) {
+    opts = opts || {};
     var match = str.match(rgxDateRange);
     if (!match) {
         console.error('Unable to parse date range [' + str + ']');
@@ -33,18 +34,22 @@ function parseDateRange (str) {
         d0 = parseNum(match[3]);
         y0 = parseNum(match[4]);
     }
-    var month1 = getShortMonth(match[5]);
+    var month1 = getShortMonth(match[6]);
     if (month1 === 'now') {
         m1 = mnow;
         d1 = dnow;
         y1 = ynow;
     } else {
         m1 = monthsMap[month1];
-        d1 = parseNum(match[7]);
-        y1 = parseNum(match[8]);
+        d1 = parseNum(match[8]);
+        y1 = parseNum(match[9]);
     }
     if ((month0 && m0 == null) || (month1 && m1 == null)) {
         console.error('Unable to parse month(s) from [' + str + ']', match, m0, m1);
+    }
+    // Handle missing year but with preceding date w/ year
+    if (y0 == null && y1 == null && opts.currYear) {
+        y0 = opts.currYear;
     }
     // If only one date specified, use as both start and end
     if (y1 == null && m1 == null && d1 == null) {

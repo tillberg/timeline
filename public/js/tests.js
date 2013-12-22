@@ -66,4 +66,8 @@ test('parseDateRange Partial', function () {
     dr = parseDateRange('March - June 20, 2000');
     eqstr(dr.start, date('March 1, 2000'));
     eqstr(dr.end, date('June 21, 2000'));
+
+    dr = parseDateRange('March 15', { currYear: 2010 });
+    eqstr(dr.start, date('March 15, 2010'));
+    eqstr(dr.end, date('March 16, 2010'));
 });
