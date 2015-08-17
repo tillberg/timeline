@@ -170,12 +170,13 @@ tbone.createView('timeline', function () {
             if ((left > minVisible && left < maxVisible) ||
                 (right > minVisible && right < maxVisible) ||
                 (left <= minVisible && right >= maxVisible)) {
+                var uwidth = right - left;
                 var width = Math.round(right) - Math.round(left) + 1;
                 memo.push(_.extend({
                     left: left,
                     right: right,
                     width: width,
-                    isMoment: width < 6
+                    isMoment: uwidth < 10
                 }, ev));
             }
             return memo;
@@ -208,6 +209,9 @@ tbone.createView('timeline', function () {
             .remove();
         var blocks = [];
         allEvents
+            .attr('class', function (d) {
+                return d.class || '';
+            })
             .classed('moment', function (d) { return !!d.isMoment; })
             .style('width', function (d) {
                 return d.isMoment ? null : d.width + 'px';
